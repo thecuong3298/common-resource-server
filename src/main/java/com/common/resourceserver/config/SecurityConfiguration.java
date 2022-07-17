@@ -10,7 +10,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.cors.CorsConfiguration;
@@ -33,6 +35,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final CustomSecurityProperties customSecurityProperties;
 
+    private final BearerTokenResolver bearerTokenResolver;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         List<String> permitPatterns = customSecurityProperties.getPermitPattern();
@@ -46,14 +50,15 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/v3/api-docs/**").permitAll()
                 .antMatchers("/swagger-ui.html").permitAll()
                 .antMatchers("/swagger-ui/**").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .csrf().disable()
+                .anyRequest().authenticated();
+        http.csrf().disable()
                 .cors()
-                .and()
-                .oauth2ResourceServer()
-                .authenticationEntryPoint(unauthorizedEntryPoint())
-                .opaqueToken().introspector(this.introspection);
+                .and().sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(resourceServerConfigurer -> {
+                    resourceServerConfigurer.authenticationEntryPoint(unauthorizedEntryPoint());
+                    resourceServerConfigurer.bearerTokenResolver(bearerTokenResolver);
+                    resourceServerConfigurer.opaqueToken(configurer -> configurer.introspector(introspection));
+                });
     }
 
     @Bean
@@ -63,6 +68,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         configuration.setAllowedOriginPatterns(corsProperties.getAllowedOriginPatterns());
         configuration.setAllowedMethods(corsProperties.getAllowedMethods());
         configuration.setAllowedHeaders(corsProperties.getAllowedHeaders());
+        configuration.setAllowCredentials(corsProperties.getAllowCredentials());
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         List<String> sourcesRegisters = corsProperties.getSourceRegister();
         if (!CollectionUtils.isEmpty(sourcesRegisters))

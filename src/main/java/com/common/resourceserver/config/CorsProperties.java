@@ -21,4 +21,6 @@ public class CorsProperties {
     private List<String> allowedHeaders = Collections.singletonList("*");
 
     private List<String> sourceRegister = Collections.singletonList("/**");
+
+    private Boolean allowCredentials = false;
 }
