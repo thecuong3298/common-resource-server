@@ -33,7 +33,7 @@ public class CommonConfig {
 
     @Bean
     public OpaqueTokenIntrospector introspection() {
-        OpaqueTokenIntrospector delegate = new NimbusOpaqueTokenIntrospector(this.introspectionUri, this.clientId, this.clientSecret);
+        OpaqueTokenIntrospector delegate = new NimbusOpaqueTokenIntrospector(this.introspectionUri + "/oauth/check_token", this.clientId, this.clientSecret);
 
         return token -> {
             OAuth2AuthenticatedPrincipal principal = delegate.introspect(token);
@@ -45,15 +45,7 @@ public class CommonConfig {
     }
 
     @Bean
-    BearerTokenResolver customBearerTokenResolver() {
-        return request -> {
-            String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-            if (header != null)
-                return header.replace("Bearer ", "");
-            Cookie cookie = WebUtils.getCookie(request, ACCESS_TOKEN);
-            if (cookie != null)
-                return cookie.getValue();
-            return null;
-        };
+    BearerTokenResolver bearerTokenResolver() {
+        return new CustomTokenResolver();
     }
 }

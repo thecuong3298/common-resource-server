@@ -23,6 +23,10 @@ public class Token {
     @JsonProperty("refresh_token")
     private String refreshToken;
 
+    @Schema(description = "Time Refresh token expires in", required = true, example = "18000", accessMode = Schema.AccessMode.READ_ONLY)
+    @JsonProperty("refresh_expires_in")
+    private String refreshTokenExpiresIn;
+
     @Schema(description = "Time expires in", required = true, example = "60", accessMode = Schema.AccessMode.READ_ONLY)
     @JsonProperty("expires_in")
     private Integer expiresIn;

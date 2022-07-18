@@ -80,7 +80,7 @@ public class TokenServiceImpl implements TokenService {
 
     private HttpHeaders createHeader(String authorization) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth(authorization);
+        headers.set("authorization", authorization);
         return headers;
     }
 }

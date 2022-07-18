@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.common</groupId>
     <artifactId>common-resource-server</artifactId>
-    <version>1.3.0</version>
+    <version>1.4.5</version>
     <name>common-resource-server</name>
     <description>common-resource-server</description>
     <properties>
@@ -21,7 +21,7 @@
         <dependency>
             <groupId>com.common</groupId>
             <artifactId>microservice</artifactId>
-            <version>1.2.3</version>
+            <version>1.2.7</version>
         </dependency>
 
         <dependency>

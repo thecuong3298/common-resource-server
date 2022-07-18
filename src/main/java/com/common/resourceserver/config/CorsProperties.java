@@ -23,4 +23,6 @@ public class CorsProperties {
     private List<String> sourceRegister = Collections.singletonList("/**");
 
     private Boolean allowCredentials = false;
+
+    private Boolean cookieSecure = false;
 }

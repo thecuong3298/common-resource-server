@@ -1,5 +1,6 @@
 package com.common.resourceserver.controller;
 
+import com.common.resourceserver.config.CorsProperties;
 import com.common.resourceserver.dto.Token;
 import com.common.resourceserver.dto.User;
 import com.common.resourceserver.service.TokenService;
@@ -13,7 +14,6 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.WebUtils;
 
@@ -34,19 +34,27 @@ public class TokenController {
 
     private final TokenService tokenService;
 
-    @Operation(summary = "Create token")
-    @PostMapping(value = "token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    private final CorsProperties corsProperties;
+
+    @Operation(summary = "Create token (Auto set cookie with http only)")
+    @PostMapping(value = "token")
     public Token getToken(
             HttpServletRequest request, HttpServletResponse response,
             @RequestBody User user) {
         Token token = tokenService.getToken(user, request.getHeader("Authorization"));
-        String cookie = "%s=%s; %s=%s; Path=/; HttpOnly; SameSite=None; Secure=false";
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                String.format(cookie, ACCESS_TOKEN, token.getAccessToken(), REFRESH_TOKEN, token.getRefreshToken()));
+        setCookie(response, token);
         return token;
     }
 
-    @Operation(summary = "Refresh token")
+    private void setCookie(HttpServletResponse response, Token token) {
+        String cookie = "%s=%s; Path=/; Max-Age=%s; HttpOnly; SameSite=None; Secure=%s";
+        response.addHeader(HttpHeaders.SET_COOKIE,
+                String.format(cookie, ACCESS_TOKEN, token.getAccessToken(), token.getExpiresIn(), corsProperties.getCookieSecure()));
+        response.addHeader(HttpHeaders.SET_COOKIE,
+                String.format(cookie, REFRESH_TOKEN, token.getRefreshToken(), token.getRefreshTokenExpiresIn(), corsProperties.getCookieSecure()));
+    }
+
+    @Operation(summary = "Refresh token (Auto set cookie with http only)")
     @PostMapping("token/refresh")
     public Token refreshToken(HttpServletRequest request, HttpServletResponse response,
                               @Parameter(schema = @Schema(description = "refresh token", example = "132asd4f65asd1f2"), required = true)
@@ -60,9 +68,7 @@ public class TokenController {
             refreshToken = cookie.getValue();
         }
         Token token = tokenService.refreshToken(refreshToken, request.getHeader("Authorization"));
-        String cookie = "%s=%s; %s=%s; Path=/; HttpOnly; SameSite=None; Secure=false";
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                String.format(cookie, ACCESS_TOKEN, token.getAccessToken(), REFRESH_TOKEN, token.getRefreshToken()));
+        setCookie(response, token);
         return token;
     }
 
