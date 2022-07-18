@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.common</groupId>
     <artifactId>common-resource-server</artifactId>
-    <version>1.4.5</version>
+    <version>1.4.9</version>
     <name>common-resource-server</name>
     <description>common-resource-server</description>
     <properties>

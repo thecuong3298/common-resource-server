@@ -1,6 +1,5 @@
 package com.common.resourceserver.controller;
 
-import com.common.resourceserver.config.CorsProperties;
 import com.common.resourceserver.dto.Token;
 import com.common.resourceserver.dto.User;
 import com.common.resourceserver.service.TokenService;
@@ -34,31 +33,19 @@ public class TokenController {
 
     private final TokenService tokenService;
 
-    private final CorsProperties corsProperties;
-
     @Operation(summary = "Create token (Auto set cookie with http only)")
     @PostMapping(value = "token")
     public Token getToken(
             HttpServletRequest request, HttpServletResponse response,
             @RequestBody User user) {
-        Token token = tokenService.getToken(user, request.getHeader("Authorization"));
-        setCookie(response, token);
-        return token;
-    }
-
-    private void setCookie(HttpServletResponse response, Token token) {
-        String cookie = "%s=%s; Path=/; Max-Age=%s; HttpOnly; SameSite=None; Secure=%s";
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                String.format(cookie, ACCESS_TOKEN, token.getAccessToken(), token.getExpiresIn(), corsProperties.getCookieSecure()));
-        response.addHeader(HttpHeaders.SET_COOKIE,
-                String.format(cookie, REFRESH_TOKEN, token.getRefreshToken(), token.getRefreshTokenExpiresIn(), corsProperties.getCookieSecure()));
+        return tokenService.getToken(user, request.getHeader("Authorization"), response);
     }
 
     @Operation(summary = "Refresh token (Auto set cookie with http only)")
     @PostMapping("token/refresh")
     public Token refreshToken(HttpServletRequest request, HttpServletResponse response,
-                              @Parameter(schema = @Schema(description = "refresh token", example = "132asd4f65asd1f2"), required = true)
-                              @RequestParam("refresh_token") String refreshToken) {
+                              @Parameter(schema = @Schema(description = "refresh token", example = "132asd4f65asd1f2"))
+                              @RequestParam(name = "refresh_token", required = false) String refreshToken) {
         if (Strings.isBlank(refreshToken)) {
             Cookie cookie = WebUtils.getCookie(request, REFRESH_TOKEN);
             if (cookie == null) {
@@ -67,16 +54,14 @@ public class TokenController {
             }
             refreshToken = cookie.getValue();
         }
-        Token token = tokenService.refreshToken(refreshToken, request.getHeader("Authorization"));
-        setCookie(response, token);
-        return token;
+        return tokenService.refreshToken(refreshToken, request.getHeader("Authorization"), response);
     }
 
-    @Operation(summary = "Revoke token")
-    @DeleteMapping("revoke/{token:.*}")
-    public void getToken(HttpServletRequest request,
+    @Operation(summary = "Revoke token (Auto delete cookie)")
+    @DeleteMapping("revoke")
+    public void getToken(HttpServletRequest request, HttpServletResponse response,
                          @Parameter(schema = @Schema(description = "Token", example = "132asd4f65asd1f2"))
-                         @PathVariable("token") String token) {
+                         @RequestParam(name = "token", required = false) String token) {
         if (Strings.isBlank(token)) {
             Cookie cookie = WebUtils.getCookie(request, ACCESS_TOKEN);
             if (cookie == null) {
@@ -85,6 +70,6 @@ public class TokenController {
             }
             token = cookie.getValue();
         }
-        tokenService.revokeToken(token);
+        tokenService.revokeToken(token, response);
     }
 }
